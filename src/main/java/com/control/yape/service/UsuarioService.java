@@ -7,4 +7,5 @@ public interface UsuarioService {
     Usuario buscarPorUsernameActivo(String username);
 
     Usuario crear(Usuario usuario);
+    Usuario actualizar(Usuario usuario);
 }

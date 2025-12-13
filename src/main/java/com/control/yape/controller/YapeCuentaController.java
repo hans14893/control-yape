@@ -1,58 +1,113 @@
 package com.control.yape.controller;
 
 import com.control.yape.dto.YapeCuentaDTO;
+import com.control.yape.model.Usuario;
 import com.control.yape.model.YapeCuenta;
+import com.control.yape.security.AuthUsuarioService;
 import com.control.yape.service.YapeCuentaService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/yape-cuentas")
 @CrossOrigin
 public class YapeCuentaController {
 
     private final YapeCuentaService cuentaService;
+    private final AuthUsuarioService authUsuarioService;
 
-    public YapeCuentaController(YapeCuentaService cuentaService) {
+    public YapeCuentaController(YapeCuentaService cuentaService,
+                                 AuthUsuarioService authUsuarioService) {
         this.cuentaService = cuentaService;
+        this.authUsuarioService = authUsuarioService;
     }
 
-    // Listar cuentas de una empresa
-    @GetMapping("/empresas/{empresaId}/yape-cuentas")
+    // ✅ LISTAR POR EMPRESA (solo su propia empresa)
+    @GetMapping("/empresa/{empresaId}")
     public List<YapeCuentaDTO> listarPorEmpresa(@PathVariable Long empresaId) {
+        Usuario usuarioActual = authUsuarioService.getUsuarioActual();
+        Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        
+        // Validar que solo acceda a su empresa
+        if (!empresaId.equals(empresaUsuario)) {
+            throw new IllegalArgumentException("No tiene permisos para acceder a esta empresa");
+        }
+        
         return cuentaService.listarPorEmpresa(empresaId)
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/yape-cuentas/{id}")
+    // ✅ OBTENER POR ID (validar que pertenece a su empresa)
+    @GetMapping("/{id}")
     public YapeCuentaDTO obtener(@PathVariable Long id) {
+        Usuario usuarioActual = authUsuarioService.getUsuarioActual();
+        Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        
         YapeCuenta cuenta = cuentaService.obtenerPorId(id);
+        
+        // Validar que la cuenta pertenece a su empresa
+        if (!cuenta.getEmpresa().getId().equals(empresaUsuario)) {
+            throw new IllegalArgumentException("No tiene permisos para acceder a esta cuenta");
+        }
+        
         return toDto(cuenta);
     }
 
-    @PostMapping("/empresas/{empresaId}/yape-cuentas")
-    public YapeCuentaDTO crear(@PathVariable Long empresaId,
-                               @RequestBody YapeCuentaDTO dto) {
-        YapeCuenta cuenta = toEntity(dto);
-        YapeCuenta creada = cuentaService.crear(empresaId, cuenta);
-        return toDto(creada);
+    // ✅ CREAR (solo en su propia empresa)
+    @PostMapping("/empresa/{empresaId}")
+    public ResponseEntity<YapeCuentaDTO> crear(@PathVariable Long empresaId,
+                                               @RequestBody YapeCuentaDTO dto) {
+        Usuario usuarioActual = authUsuarioService.getUsuarioActual();
+        Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        
+        // Validar que solo puede crear en su propia empresa
+        if (!empresaId.equals(empresaUsuario)) {
+            throw new IllegalArgumentException("No tiene permisos para crear en esta empresa");
+        }
+        
+        YapeCuenta creada = cuentaService.crear(empresaId, toEntity(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDto(creada));
     }
 
-    @PutMapping("/yape-cuentas/{id}")
+    // ✅ ACTUALIZAR (solo si pertenece a su empresa)
+    @PutMapping("/{id}")
     public YapeCuentaDTO actualizar(@PathVariable Long id,
                                     @RequestBody YapeCuentaDTO dto) {
-        YapeCuenta data = toEntity(dto);
-        YapeCuenta actualizada = cuentaService.actualizar(id, data);
+        Usuario usuarioActual = authUsuarioService.getUsuarioActual();
+        Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        
+        YapeCuenta existente = cuentaService.obtenerPorId(id);
+        
+        // Validar que la cuenta pertenece a su empresa
+        if (!existente.getEmpresa().getId().equals(empresaUsuario)) {
+            throw new IllegalArgumentException("No tiene permisos para actualizar esta cuenta");
+        }
+        
+        YapeCuenta actualizada = cuentaService.actualizar(id, toEntity(dto));
         return toDto(actualizada);
     }
 
-    @DeleteMapping("/yape-cuentas/{id}")
-    public void desactivar(@PathVariable Long id) {
+    // ✅ DESACTIVAR (solo si pertenece a su empresa)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> desactivar(@PathVariable Long id) {
+        Usuario usuarioActual = authUsuarioService.getUsuarioActual();
+        Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        
+        YapeCuenta cuenta = cuentaService.obtenerPorId(id);
+        
+        // Validar que la cuenta pertenece a su empresa
+        if (!cuenta.getEmpresa().getId().equals(empresaUsuario)) {
+            throw new IllegalArgumentException("No tiene permisos para desactivar esta cuenta");
+        }
+        
         cuentaService.desactivar(id);
+        return ResponseEntity.noContent().build();
     }
 
     // ================== MAPEOS ==================
@@ -80,7 +135,6 @@ public class YapeCuentaController {
         c.setNumeroYape(dto.getNumeroYape());
         c.setTelefono(dto.getTelefono());
         c.setActivo(dto.getActivo() != null ? dto.getActivo() : Boolean.TRUE);
-        // La empresa se setea en el service usando empresaId del path
         return c;
     }
 }

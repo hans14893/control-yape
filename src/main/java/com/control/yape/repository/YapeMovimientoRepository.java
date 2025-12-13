@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface YapeMovimientoRepository extends JpaRepository<YapeMovimiento, Long> {
 
@@ -36,4 +37,9 @@ public interface YapeMovimientoRepository extends JpaRepository<YapeMovimiento, 
     BigDecimal totalRecibidoPorEmpresa(Long empresaId,
                                        LocalDateTime desde,
                                        LocalDateTime hasta);
+    
+    List<YapeMovimiento> findAllByOrderByFechaHoraDesc();
+    Optional<YapeMovimiento> findByFirmaUnica(String firmaUnica);
+    
+    List<YapeMovimiento> findByYapeCuenta_Empresa_IdOrderByFechaHoraDesc(Long empresaId);
 }

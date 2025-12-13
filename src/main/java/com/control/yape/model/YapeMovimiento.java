@@ -5,10 +5,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "yape_movimiento",
-       indexes = {
-           @Index(name = "idx_mov_cuenta_fecha", columnList = "yape_cuenta_id, fechaHora")
-       })
+@Table(
+    name = "yape_movimiento",
+    indexes = {
+        @Index(name = "idx_mov_cuenta_fecha", columnList = "yape_cuenta_id, fechaHora"),
+        @Index(name = "idx_mov_firma_unica", columnList = "firmaUnica")
+    }
+)
 public class YapeMovimiento {
 
     @Id
@@ -31,75 +34,121 @@ public class YapeMovimiento {
     private String mensaje;
 
     @Column(length = 20, nullable = false)
-    private String estado = "RECIBIDO"; // o enum si quieres
+    private String estado = "RECIBIDO"; // RECIBIDO, USADO_EN_VENTA, ANULADO, etc.
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "yape_cuenta_id")
     private YapeCuenta yapeCuenta;
 
-	public Long getId() {
-		return id;
-	}
+    // ========= NUEVOS CAMPOS PRO =========
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    @Column(name = "firmaUnica", length = 200, unique = true)
+    private String firmaUnica;
 
-	public BigDecimal getMonto() {
-		return monto;
-	}
+    @Column(length = 50)
+    private String origen; // ANDROID_APP, MANUAL, etc.
 
-	public void setMonto(BigDecimal monto) {
-		this.monto = monto;
-	}
+    @Column(name = "texto_original", columnDefinition = "TEXT")
+    private String textoOriginal;
 
-	public String getNombreCliente() {
-		return nombreCliente;
-	}
+    @Column(name = "device_id", length = 100)
+    private String deviceId;
 
-	public void setNombreCliente(String nombreCliente) {
-		this.nombreCliente = nombreCliente;
-	}
+    // ========= GETTERS / SETTERS =========
 
-	public String getCelular() {
-		return celular;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setCelular(String celular) {
-		this.celular = celular;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public LocalDateTime getFechaHora() {
-		return fechaHora;
-	}
+    public BigDecimal getMonto() {
+        return monto;
+    }
 
-	public void setFechaHora(LocalDateTime fechaHora) {
-		this.fechaHora = fechaHora;
-	}
+    public void setMonto(BigDecimal monto) {
+        this.monto = monto;
+    }
 
-	public String getMensaje() {
-		return mensaje;
-	}
+    public String getNombreCliente() {
+        return nombreCliente;
+    }
 
-	public void setMensaje(String mensaje) {
-		this.mensaje = mensaje;
-	}
+    public void setNombreCliente(String nombreCliente) {
+        this.nombreCliente = nombreCliente;
+    }
 
-	public String getEstado() {
-		return estado;
-	}
+    public String getCelular() {
+        return celular;
+    }
 
-	public void setEstado(String estado) {
-		this.estado = estado;
-	}
+    public void setCelular(String celular) {
+        this.celular = celular;
+    }
 
-	public YapeCuenta getYapeCuenta() {
-		return yapeCuenta;
-	}
+    public LocalDateTime getFechaHora() {
+        return fechaHora;
+    }
 
-	public void setYapeCuenta(YapeCuenta yapeCuenta) {
-		this.yapeCuenta = yapeCuenta;
-	}
+    public void setFechaHora(LocalDateTime fechaHora) {
+        this.fechaHora = fechaHora;
+    }
 
-    
+    public String getMensaje() {
+        return mensaje;
+    }
+
+    public void setMensaje(String mensaje) {
+        this.mensaje = mensaje;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public YapeCuenta getYapeCuenta() {
+        return yapeCuenta;
+    }
+
+    public void setYapeCuenta(YapeCuenta yapeCuenta) {
+        this.yapeCuenta = yapeCuenta;
+    }
+
+    public String getFirmaUnica() {
+        return firmaUnica;
+    }
+
+    public void setFirmaUnica(String firmaUnica) {
+        this.firmaUnica = firmaUnica;
+    }
+
+    public String getOrigen() {
+        return origen;
+    }
+
+    public void setOrigen(String origen) {
+        this.origen = origen;
+    }
+
+    public String getTextoOriginal() {
+        return textoOriginal;
+    }
+
+    public void setTextoOriginal(String textoOriginal) {
+        this.textoOriginal = textoOriginal;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+    }
 }

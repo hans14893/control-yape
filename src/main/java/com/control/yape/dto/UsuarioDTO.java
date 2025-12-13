@@ -1,27 +1,22 @@
+// src/main/java/com/control/yape/dto/UsuarioDTO.java
 package com.control.yape.dto;
 
-public class LoginResponseDTO {
+public class UsuarioDTO {
 
-	private String token; 
-    private Long usuarioId;
+    private Long id;
     private String username;
     private String nombreCompleto;
-    private String rol;
-
+    private String rol;          // ADMIN, CAJERO, SUPERADMIN, etc.
     private Long empresaId;
     private String empresaNombre;
+    private Boolean activo;
 
-    // más adelante aquí podríamos agregar un token JWT
-
-    public LoginResponseDTO() {
+    public Long getId() {
+        return id;
     }
 
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getUsername() {
@@ -64,12 +59,11 @@ public class LoginResponseDTO {
         this.empresaNombre = empresaNombre;
     }
 
-	public String getToken() {
-		return token;
-	}
+    public Boolean getActivo() {
+        return activo;
+    }
 
-	public void setToken(String token) {
-		this.token = token;
-	}
-    
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
+    }
 }

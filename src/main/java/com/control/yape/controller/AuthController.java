@@ -3,7 +3,9 @@ package com.control.yape.controller;
 import com.control.yape.dto.LoginRequestDTO;
 import com.control.yape.dto.LoginResponseDTO;
 import com.control.yape.model.Usuario;
+import com.control.yape.security.JwtUtil;   // ✅ IMPORTA ESTO
 import com.control.yape.service.UsuarioService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -12,24 +14,27 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UsuarioService usuarioService;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UsuarioService usuarioService) {
+    public AuthController(UsuarioService usuarioService,
+                          PasswordEncoder passwordEncoder) {
         this.usuarioService = usuarioService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
     public LoginResponseDTO login(@RequestBody LoginRequestDTO request) {
 
-        // 1. Buscar usuario (activo)
         Usuario usuario = usuarioService.buscarPorUsernameActivo(request.getUsername());
 
-        // 2. Comparar password (por ahora plano, luego ponemos hash/BCrypt)
-        if (!usuario.getPassword().equals(request.getPassword())) {
-            throw new IllegalArgumentException("Credenciales inválidas");
-        }
+        boolean ok = passwordEncoder.matches(request.getPassword(), usuario.getPassword());
+        if (!ok) throw new IllegalArgumentException("Credenciales inválidas");
 
-        // 3. Armar respuesta
+        // ✅ GENERAR TOKEN
+        String token = JwtUtil.generateToken(usuario.getUsername());
+
         LoginResponseDTO resp = new LoginResponseDTO();
+        resp.setToken(token); // ✅ AGREGAR ESTO
         resp.setUsuarioId(usuario.getId());
         resp.setUsername(usuario.getUsername());
         resp.setNombreCompleto(usuario.getNombreCompleto());

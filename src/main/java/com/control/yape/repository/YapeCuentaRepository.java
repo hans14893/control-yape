@@ -13,4 +13,9 @@ public interface YapeCuentaRepository extends JpaRepository<YapeCuenta, Long> {
     Optional<YapeCuenta> findByIdAndEmpresa_Id(Long id, Long empresaId);
 
     boolean existsByEmpresa_IdAndNumeroYape(Long empresaId, String numeroYape);
+    
+    Optional<YapeCuenta> findByNumeroYape(String numeroYape);
+    
+    List<YapeCuenta> findByEmpresa_IdOrderByIdDesc(Long empresaId);
+    List<YapeCuenta> findByEmpresa_IdOrderByNombre(Long empresaId);
 }

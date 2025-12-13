@@ -6,9 +6,12 @@ import com.control.yape.repository.EmpresaRepository;
 import com.control.yape.repository.YapeCuentaRepository;
 import com.control.yape.service.NotFoundException;
 import com.control.yape.service.YapeCuentaService;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+
 
 @Service
 public class YapeCuentaServiceImpl implements YapeCuentaService {
@@ -21,12 +24,13 @@ public class YapeCuentaServiceImpl implements YapeCuentaService {
         this.cuentaRepository = cuentaRepository;
         this.empresaRepository = empresaRepository;
     }
-
+    
     @Override
     public List<YapeCuenta> listarPorEmpresa(Long empresaId) {
-        return cuentaRepository.findByEmpresa_IdAndActivoTrue(empresaId);
+        return cuentaRepository.findByEmpresa_IdOrderByNombre(empresaId);
     }
 
+   
     @Override
     public YapeCuenta obtenerPorId(Long id) {
         return cuentaRepository.findById(id)
