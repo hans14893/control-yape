@@ -26,14 +26,15 @@ public class YapeCuentaController {
         this.authUsuarioService = authUsuarioService;
     }
 
-    // ✅ LISTAR POR EMPRESA (solo su propia empresa)
+    // ✅ LISTAR POR EMPRESA (solo su propia empresa, SUPERADMIN ve todas)
     @GetMapping("/empresa/{empresaId}")
     public List<YapeCuentaDTO> listarPorEmpresa(@PathVariable Long empresaId) {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
         
-        // Validar que solo acceda a su empresa
-        if (!empresaId.equals(empresaUsuario)) {
+        // SUPERADMIN puede ver todas las empresas, otros solo su empresa
+        if (!"SUPERADMIN".equals(rol) && !empresaId.equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para acceder a esta empresa");
         }
         
@@ -59,15 +60,16 @@ public class YapeCuentaController {
         return toDto(cuenta);
     }
 
-    // ✅ CREAR (solo en su propia empresa)
+    // ✅ CREAR (solo en su propia empresa, SUPERADMIN en cualquiera)
     @PostMapping("/empresa/{empresaId}")
     public ResponseEntity<YapeCuentaDTO> crear(@PathVariable Long empresaId,
                                                @RequestBody YapeCuentaDTO dto) {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
         
-        // Validar que solo puede crear en su propia empresa
-        if (!empresaId.equals(empresaUsuario)) {
+        // SUPERADMIN puede crear en cualquier empresa, otros solo en la suya
+        if (!"SUPERADMIN".equals(rol) && !empresaId.equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para crear en esta empresa");
         }
         

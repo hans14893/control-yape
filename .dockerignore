@@ -1,0 +1,9 @@
+target/
+.git/
+.mvn/
+.vscode/
+.classpath
+.project
+.settings
+*.log
+*.md
