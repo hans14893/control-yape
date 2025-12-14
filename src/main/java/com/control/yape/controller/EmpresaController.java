@@ -26,7 +26,7 @@ public class EmpresaController {
         this.authUsuarioService = authUsuarioService;
     }
 
-    // ✅ LISTAR - Solo retorna su empresa, SUPER_ADMIN ve todas
+    // ✅ LISTAR - Solo retorna su empresa, SUPER_ADMIN ve todas (solo activas)
     @GetMapping
     public List<EmpresaDTO> listar() {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
@@ -35,16 +35,21 @@ public class EmpresaController {
             throw new IllegalArgumentException("Usuario no autenticado o sin empresa asignada");
         }
         
-        // Si es SUPERADMIN, retorna todas las empresas
+        // Si es SUPERADMIN, retorna todas las empresas activas
         if ("SUPERADMIN".equals(usuarioActual.getRol())) {
             return empresaService.listarActivas()
                     .stream()
+                    .filter(e -> e.getActivo() != null && e.getActivo()) // Solo empresas activas
                     .map(this::toDto)
                     .collect(Collectors.toList());
         }
         
-        // Si no, solo su empresa
-        return List.of(toDto(usuarioActual.getEmpresa()));
+        // Si no, solo su empresa (si está activa)
+        Empresa empresa = usuarioActual.getEmpresa();
+        if (empresa.getActivo() != null && empresa.getActivo()) {
+            return List.of(toDto(empresa));
+        }
+        return List.of(); // Empresa inactiva, retorna lista vacía
     }
 
     // ✅ OBTENER POR ID - Valida que sea su empresa (SUPER_ADMIN accede a todas)

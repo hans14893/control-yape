@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-@Profile("dev") // Solo ejecutar en perfil 'dev'
+@Profile("!prod") // Ejecutar en todos excepto producción
 public class DataInitializer {
 
     @Bean

@@ -40,20 +40,22 @@ public class YapeCuentaController {
         
         return cuentaService.listarPorEmpresa(empresaId)
                 .stream()
+                .filter(c -> c.getActivo() != null && c.getActivo()) // Solo cuentas activas
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
-    // ✅ OBTENER POR ID (validar que pertenece a su empresa)
+    // ✅ OBTENER POR ID (validar que pertenece a su empresa, SUPERADMIN accede a todas)
     @GetMapping("/{id}")
     public YapeCuentaDTO obtener(@PathVariable Long id) {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
         
         YapeCuenta cuenta = cuentaService.obtenerPorId(id);
         
-        // Validar que la cuenta pertenece a su empresa
-        if (!cuenta.getEmpresa().getId().equals(empresaUsuario)) {
+        // Validar que la cuenta pertenece a su empresa (SUPERADMIN puede acceder a todas)
+        if (!"SUPERADMIN".equals(rol) && !cuenta.getEmpresa().getId().equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para acceder a esta cuenta");
         }
         
@@ -77,17 +79,18 @@ public class YapeCuentaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(creada));
     }
 
-    // ✅ ACTUALIZAR (solo si pertenece a su empresa)
+    // ✅ ACTUALIZAR (solo si pertenece a su empresa, SUPERADMIN puede actualizar todas)
     @PutMapping("/{id}")
     public YapeCuentaDTO actualizar(@PathVariable Long id,
                                     @RequestBody YapeCuentaDTO dto) {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
         
         YapeCuenta existente = cuentaService.obtenerPorId(id);
         
-        // Validar que la cuenta pertenece a su empresa
-        if (!existente.getEmpresa().getId().equals(empresaUsuario)) {
+        // Validar que la cuenta pertenece a su empresa (SUPERADMIN puede actualizar todas)
+        if (!"SUPERADMIN".equals(rol) && !existente.getEmpresa().getId().equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para actualizar esta cuenta");
         }
         
@@ -95,16 +98,17 @@ public class YapeCuentaController {
         return toDto(actualizada);
     }
 
-    // ✅ DESACTIVAR (solo si pertenece a su empresa)
+    // ✅ DESACTIVAR (solo si pertenece a su empresa, SUPERADMIN puede desactivar todas)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> desactivar(@PathVariable Long id) {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
         
         YapeCuenta cuenta = cuentaService.obtenerPorId(id);
         
-        // Validar que la cuenta pertenece a su empresa
-        if (!cuenta.getEmpresa().getId().equals(empresaUsuario)) {
+        // Validar que la cuenta pertenece a su empresa (SUPERADMIN puede desactivar todas)
+        if (!"SUPERADMIN".equals(rol) && !cuenta.getEmpresa().getId().equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para desactivar esta cuenta");
         }
         

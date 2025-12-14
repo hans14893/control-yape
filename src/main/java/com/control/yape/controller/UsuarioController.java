@@ -44,35 +44,74 @@ public class UsuarioController {
         
         return usuarioRepository.findByEmpresa_IdOrderByNombreCompleto(empresaId)
                 .stream()
+                .filter(u -> u.getActivo() != null && u.getActivo()) // Solo usuarios activos
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    // ============= OBTENER POR ID (validar que sea de su empresa) =============
+    // ============= LISTAR POR EMPRESA (SUPERADMIN ve todas, otros solo su empresa) =============
+    @GetMapping("/empresa/{empresaId}")
+    public List<UsuarioDTO> listarPorEmpresa(@PathVariable Long empresaId) {
+        Usuario usuarioActual = authUsuarioService.getUsuarioActual();
+        Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
+        
+        // SUPERADMIN puede ver usuarios de cualquier empresa, otros solo su empresa
+        if (!"SUPERADMIN".equals(rol) && !empresaId.equals(empresaUsuario)) {
+            throw new IllegalArgumentException("No tiene permisos para ver usuarios de otra empresa");
+        }
+        
+        return usuarioRepository.findByEmpresa_IdOrderByNombreCompleto(empresaId)
+                .stream()
+                .filter(u -> u.getActivo() != null && u.getActivo()) // Solo usuarios activos
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    // ============= OBTENER POR ID (validar que sea de su empresa, SUPERADMIN puede obtener cualquiera) =============
     @GetMapping("/{id}")
     public UsuarioDTO obtener(@PathVariable Long id) {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
         
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado: " + id));
         
-        // Validar que el usuario pertenece a su empresa
-        if (!u.getEmpresa().getId().equals(empresaUsuario)) {
+        // Validar que el usuario pertenece a su empresa (SUPERADMIN puede obtener cualquiera)
+        if (!"SUPERADMIN".equals(rol) && !u.getEmpresa().getId().equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para acceder a este usuario");
         }
         
         return toDTO(u);
     }
 
-    // ============= CREAR (solo en su propia empresa) =============
+    // ============= CREAR (solo en su propia empresa, SUPERADMIN en cualquiera) =============
     @PostMapping
-    public UsuarioDTO crear(@Valid @RequestBody UsuarioRequest req) {
+    public UsuarioDTO crear(@RequestBody UsuarioRequest req) {
+        // Validaciones para creación (campos requeridos)
+        if (req.getUsername() == null || req.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Username es requerido");
+        }
+        if (req.getPassword() == null || req.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Password es requerido");
+        }
+        if (req.getNombreCompleto() == null || req.getNombreCompleto().trim().isEmpty()) {
+            throw new IllegalArgumentException("Nombre completo es requerido");
+        }
+        if (req.getRol() == null || req.getRol().trim().isEmpty()) {
+            throw new IllegalArgumentException("Rol es requerido");
+        }
+        if (req.getEmpresaId() == null) {
+            throw new IllegalArgumentException("Empresa ID es requerido");
+        }
+        
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
         
-        // Validar que solo puede crear usuarios en su empresa
-        if (req.getEmpresaId() == null || !req.getEmpresaId().equals(empresaUsuario)) {
+        // SUPERADMIN puede crear usuarios en cualquier empresa, otros solo en la suya
+        if (!"SUPERADMIN".equals(rol) && !req.getEmpresaId().equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para crear usuarios en otra empresa");
         }
 
@@ -81,7 +120,7 @@ public class UsuarioController {
 
         Usuario u = new Usuario();
         u.setUsername(req.getUsername());
-        u.setPassword(req.getPassword()); // se encripta en UsuarioServiceImpl
+        u.setPassword(req.getPassword());
         u.setNombreCompleto(req.getNombreCompleto());
         u.setRol(req.getRol());
         u.setEmpresa(empresa);
@@ -91,17 +130,25 @@ public class UsuarioController {
         return toDTO(creado);
     }
 
-    // ============= EDITAR (PUT - solo usuarios de su empresa) =============
+    // ============= CREAR POR EMPRESA (alternativo para frontend) =============
+    @PostMapping("/empresa/{empresaId}")
+    public UsuarioDTO crearPorEmpresa(@PathVariable Long empresaId, @RequestBody UsuarioRequest req) {
+        req.setEmpresaId(empresaId); // Sobrescribir empresaId desde la URL
+        return crear(req);
+    }
+
+    // ============= EDITAR (PUT - solo usuarios de su empresa, SUPERADMIN de cualquiera) =============
     @PutMapping("/{id}")
-    public UsuarioDTO editar(@PathVariable Long id, @Valid @RequestBody UsuarioRequest req) {
+    public UsuarioDTO editar(@PathVariable Long id, @RequestBody UsuarioRequest req) {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
 
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado: " + id));
         
-        // Validar que pertenece a su empresa
-        if (!u.getEmpresa().getId().equals(empresaUsuario)) {
+        // Validar que pertenece a su empresa (SUPERADMIN puede editar cualquiera)
+        if (!"SUPERADMIN".equals(rol) && !u.getEmpresa().getId().equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para editar este usuario");
         }
 
@@ -136,17 +183,18 @@ public class UsuarioController {
         return toDTO(actualizado);
     }
 
-    // ============= ELIMINAR (DELETE) - BORRADO LÓGICO =============
+    // ============= ELIMINAR (DELETE) - BORRADO LÓGICO (SUPERADMIN puede eliminar cualquiera) =============
     @DeleteMapping("/{id}")
     public void eliminar(@PathVariable Long id) {
         Usuario usuarioActual = authUsuarioService.getUsuarioActual();
         Long empresaUsuario = usuarioActual.getEmpresa().getId();
+        String rol = usuarioActual.getRol() != null ? usuarioActual.getRol().toUpperCase() : "";
         
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado: " + id));
 
-        // Validar que solo puede eliminar usuarios de su empresa
-        if (!u.getEmpresa().getId().equals(empresaUsuario)) {
+        // Validar que solo puede eliminar usuarios de su empresa (SUPERADMIN puede eliminar cualquiera)
+        if (!"SUPERADMIN".equals(rol) && !u.getEmpresa().getId().equals(empresaUsuario)) {
             throw new IllegalArgumentException("No tiene permisos para eliminar este usuario");
         }
 

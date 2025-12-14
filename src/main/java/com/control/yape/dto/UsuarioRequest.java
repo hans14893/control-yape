@@ -3,11 +3,18 @@ package com.control.yape.dto;
 
 public class UsuarioRequest {
 
+    // Campos opcionales: pueden ser null en PUT (edición), validados en POST (creación)
     private String username;
+    
     private String password;
+    
     private String nombreCompleto;
+    
     private String rol;
+    
+    // Opcional: si viene en la URL, no es necesario en el body
     private Long empresaId;
+    
     private Boolean activo;
 
     public String getUsername() {
