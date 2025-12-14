@@ -1,0 +1,41 @@
+# Railway Ignore - Archivos que NO se suben al build
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+target/
+build/
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+logs/
+
+# Temporal
+temp/
+tmp/
+.gradle/
+
+# Documentación (opcional, incluir para referencia)
+# *.md
+
+# Env files (nunca incluir credenciales)
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
