@@ -14,28 +14,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class SecurityConfig {
 
 	@Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	    http
+	        .csrf(csrf -> csrf.disable())
+	        .cors(Customizer.withDefaults())
+	        .sessionManagement(sm -> sm.sessionCreationPolicy(
+	            org.springframework.security.config.http.SessionCreationPolicy.STATELESS
+	        ))
+	        .httpBasic(b -> b.disable())
+	        .formLogin(f -> f.disable())
+	        .authorizeHttpRequests(auth -> auth
+	            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+	            .requestMatchers("/ping").permitAll()
+	            .requestMatchers("/api/auth/**").permitAll()
+	            .anyRequest().authenticated()
+	        );
 
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults())
-            .authorizeHttpRequests(auth -> auth
-                // Preflight CORS
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // Endpoints públicos
-                .requestMatchers("/ping").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
-
-                // Todo lo demás protegido
-                .anyRequest().authenticated()
-            );
-
-        http.addFilterBefore(
-            new JwtAuthFilter(),
-            UsernamePasswordAuthenticationFilter.class
-        );
-
-        return http.build();
-    }
+	    http.addFilterBefore(new JwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
+	    return http.build();
+	}
 }
