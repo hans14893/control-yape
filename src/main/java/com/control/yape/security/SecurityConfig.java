@@ -13,33 +13,29 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class SecurityConfig {
 
-    @Bean
+	@Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
             .csrf(csrf -> csrf.disable())
-            // ✅ IMPORTANTE: habilita CORS en Spring Security
             .cors(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
-                // ✅ preflight requests
+                // Preflight CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // ✅ login público
+                // Endpoints públicos
+                .requestMatchers("/ping").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
 
-                // (DEV) si quieres probar sin JWT bloqueando:
-                // .requestMatchers("/api/yape-movimientos/**").permitAll()
-
+                // Todo lo demás protegido
                 .anyRequest().authenticated()
             );
 
-        http.addFilterBefore(new JwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(
+            new JwtAuthFilter(),
+            UsernamePasswordAuthenticationFilter.class
+        );
 
         return http.build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 }
