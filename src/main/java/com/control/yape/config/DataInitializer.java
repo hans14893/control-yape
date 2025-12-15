@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-@Profile("!prod") // Ejecutar en todos excepto producción
+@Profile("prod")
 public class DataInitializer {
 
     @Bean
@@ -22,11 +22,13 @@ public class DataInitializer {
     ) {
         return args -> {
 
+            if (usuarioRepository.count() > 0) {
+                System.out.println(">>> Usuarios ya existen, DataInitializer no se ejecuta");
+                return;
+            }
+
             System.out.println(">>> Ejecutando DataInitializer...");
 
-            // ============================================================
-            // 1) CREAR EMPRESA SISTEMA SI NO EXISTE
-            // ============================================================
             Empresa empresaSistema = empresaRepository.findByNombre("EMPRESA SISTEMA")
                     .orElseGet(() -> {
                         Empresa e = new Empresa();
@@ -34,36 +36,22 @@ public class DataInitializer {
                         e.setRuc("00000000000");
                         e.setEmailContacto("sysadmin@controlyape.com");
                         e.setActivo(true);
-                        Empresa guardada = empresaRepository.save(e);
-                        System.out.println("✔ Empresa SISTEMA creada con id: " + guardada.getId());
-                        return guardada;
+                        return empresaRepository.save(e);
                     });
 
-            // ============================================================
-            // 2) CREAR USUARIO SUPERADMIN SI NO EXISTE
-            // ============================================================
-            usuarioRepository.findByUsername("superadmin")
-                    .ifPresentOrElse(
-                            u -> System.out.println("✔ SUPERADMIN ya existe, no se crea"),
-                            () -> {
-                                Usuario superAdmin = new Usuario();
-                                superAdmin.setNombreCompleto("Super Administrador del Sistema");
-                                superAdmin.setUsername("superadmin");
-                                superAdmin.setRol("SUPERADMIN");
-                                superAdmin.setActivo(true);
+            Usuario superAdmin = new Usuario();
+            superAdmin.setNombreCompleto("Super Administrador del Sistema");
+            superAdmin.setUsername("superadmin");
+            superAdmin.setRol("SUPERADMIN");
+            superAdmin.setActivo(true);
+            superAdmin.setEmpresa(empresaSistema);
+            superAdmin.setPassword(passwordEncoder.encode("super123"));
 
-                                // 👉 Obligatorio porque empresa_id es NOT NULL
-                                superAdmin.setEmpresa(empresaSistema);
+            usuarioRepository.save(superAdmin);
 
-                                // 🔐 Contraseña encriptada
-                                superAdmin.setPassword(passwordEncoder.encode("super123"));
-
-                                usuarioRepository.save(superAdmin);
-                                System.out.println("✔ SUPERADMIN creado: superadmin / super123");
-                            }
-                    );
-
-            System.out.println(">>> DataInitializer completado.");
+            System.out.println("✔ SUPERADMIN creado: superadmin / super123");
         };
     }
+
+
 }

@@ -11,7 +11,7 @@ import com.control.yape.service.NotFoundException;
 import com.control.yape.service.UsuarioService;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
