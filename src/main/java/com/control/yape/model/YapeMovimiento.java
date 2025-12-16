@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 @Table(
     name = "yape_movimiento",
     indexes = {
-        @Index(name = "idx_mov_cuenta_fecha", columnList = "yape_cuenta_id, fechaHora"),
-        @Index(name = "idx_mov_firma_unica", columnList = "firmaUnica")
+        @Index(name = "idx_mov_cuenta_fecha", columnList = "yape_cuenta_id, fecha_hora"),
+        @Index(name = "idx_mov_firma_unica", columnList = "firma_unica")
     }
 )
 public class YapeMovimiento {
@@ -21,32 +21,31 @@ public class YapeMovimiento {
     @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal monto;
 
-    @Column(length = 100)
+    @Column(name = "nombre_cliente", length = 100)
     private String nombreCliente;
 
     @Column(length = 20)
     private String celular;
 
-    @Column(nullable = false)
-    private LocalDateTime fechaHora = LocalDateTime.now();
+    @Column(name = "fecha_hora", nullable = false)
+    private LocalDateTime fechaHora;
 
     @Column(columnDefinition = "TEXT")
     private String mensaje;
 
     @Column(length = 20, nullable = false)
-    private String estado = "RECIBIDO"; // RECIBIDO, USADO_EN_VENTA, ANULADO, etc.
+    private String estado;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "yape_cuenta_id")
     private YapeCuenta yapeCuenta;
 
-    // ========= NUEVOS CAMPOS PRO =========
-
-    @Column(name = "firmaUnica", length = 200, unique = true)
+    // ✅ firma hash (64 chars) para UNIQUE
+    @Column(name = "firma_unica", length = 64, nullable = false, unique = true)
     private String firmaUnica;
 
     @Column(length = 50)
-    private String origen; // ANDROID_APP, MANUAL, etc.
+    private String origen; // ANDROID_APP, MANUAL
 
     @Column(name = "texto_original", columnDefinition = "TEXT")
     private String textoOriginal;
@@ -54,101 +53,108 @@ public class YapeMovimiento {
     @Column(name = "device_id", length = 100)
     private String deviceId;
 
-    // ========= GETTERS / SETTERS =========
-
-    public Long getId() {
-        return id;
+    @PrePersist
+    public void prePersist() {
+        if (fechaHora == null) fechaHora = LocalDateTime.now();
+        if (estado == null || estado.isBlank()) estado = "RECIBIDO";
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+	public Long getId() {
+		return id;
+	}
 
-    public BigDecimal getMonto() {
-        return monto;
-    }
+	public void setId(Long id) {
+		this.id = id;
+	}
 
-    public void setMonto(BigDecimal monto) {
-        this.monto = monto;
-    }
+	public BigDecimal getMonto() {
+		return monto;
+	}
 
-    public String getNombreCliente() {
-        return nombreCliente;
-    }
+	public void setMonto(BigDecimal monto) {
+		this.monto = monto;
+	}
 
-    public void setNombreCliente(String nombreCliente) {
-        this.nombreCliente = nombreCliente;
-    }
+	public String getNombreCliente() {
+		return nombreCliente;
+	}
 
-    public String getCelular() {
-        return celular;
-    }
+	public void setNombreCliente(String nombreCliente) {
+		this.nombreCliente = nombreCliente;
+	}
 
-    public void setCelular(String celular) {
-        this.celular = celular;
-    }
+	public String getCelular() {
+		return celular;
+	}
 
-    public LocalDateTime getFechaHora() {
-        return fechaHora;
-    }
+	public void setCelular(String celular) {
+		this.celular = celular;
+	}
 
-    public void setFechaHora(LocalDateTime fechaHora) {
-        this.fechaHora = fechaHora;
-    }
+	public LocalDateTime getFechaHora() {
+		return fechaHora;
+	}
 
-    public String getMensaje() {
-        return mensaje;
-    }
+	public void setFechaHora(LocalDateTime fechaHora) {
+		this.fechaHora = fechaHora;
+	}
 
-    public void setMensaje(String mensaje) {
-        this.mensaje = mensaje;
-    }
+	public String getMensaje() {
+		return mensaje;
+	}
 
-    public String getEstado() {
-        return estado;
-    }
+	public void setMensaje(String mensaje) {
+		this.mensaje = mensaje;
+	}
 
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
+	public String getEstado() {
+		return estado;
+	}
 
-    public YapeCuenta getYapeCuenta() {
-        return yapeCuenta;
-    }
+	public void setEstado(String estado) {
+		this.estado = estado;
+	}
 
-    public void setYapeCuenta(YapeCuenta yapeCuenta) {
-        this.yapeCuenta = yapeCuenta;
-    }
+	public YapeCuenta getYapeCuenta() {
+		return yapeCuenta;
+	}
 
-    public String getFirmaUnica() {
-        return firmaUnica;
-    }
+	public void setYapeCuenta(YapeCuenta yapeCuenta) {
+		this.yapeCuenta = yapeCuenta;
+	}
 
-    public void setFirmaUnica(String firmaUnica) {
-        this.firmaUnica = firmaUnica;
-    }
+	public String getFirmaUnica() {
+		return firmaUnica;
+	}
 
-    public String getOrigen() {
-        return origen;
-    }
+	public void setFirmaUnica(String firmaUnica) {
+		this.firmaUnica = firmaUnica;
+	}
 
-    public void setOrigen(String origen) {
-        this.origen = origen;
-    }
+	public String getOrigen() {
+		return origen;
+	}
 
-    public String getTextoOriginal() {
-        return textoOriginal;
-    }
+	public void setOrigen(String origen) {
+		this.origen = origen;
+	}
 
-    public void setTextoOriginal(String textoOriginal) {
-        this.textoOriginal = textoOriginal;
-    }
+	public String getTextoOriginal() {
+		return textoOriginal;
+	}
 
-    public String getDeviceId() {
-        return deviceId;
-    }
+	public void setTextoOriginal(String textoOriginal) {
+		this.textoOriginal = textoOriginal;
+	}
 
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
+
+    
+    // getters/setters...
 }
