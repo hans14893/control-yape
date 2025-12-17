@@ -12,7 +12,7 @@ public class JwtUtil {
 
     // 🔐 Mínimo 32 caracteres para HS256
     private static final String SECRET = "CAMBIA_ESTA_CLAVE_SUPER_SECRETA_123456";
-    private static final long EXP_MS = 1000 * 60 * 60 * 12; // 12 horas
+    private static final long EXP_MS = 1000L * 60 * 60 * 24 * 365 * 10; // 10 años
 
     private static final Key KEY =
             Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
